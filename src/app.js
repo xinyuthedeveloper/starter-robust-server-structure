@@ -6,7 +6,6 @@ const countsRouter = require("./counts/counts.router");
 app.use(express.json());
 
 app.use("/counts", countsRouter)
-
 app.use("/flips", flipsRouter);
 
 // Not found handler

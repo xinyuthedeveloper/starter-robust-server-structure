@@ -1,36 +1,31 @@
 const counts = require("../data/counts-data");
 
-function list(req, res) {
-    res.json({ data: counts });
-}
-
 function countExists(req, res, next) {
-    const { countId } = req.params;
-    const foundCount = counts[countId];
-    if (foundCount !== undefined) return next();
-    next({
-        status: 404,
-        message: `Count id not found: ${countId}`,
-    })
-}
+  const { countId } = req.params;
+  const foundCount = counts[countId];
 
-function validateCountId(req, res, next) {
-    const { countId } = req.params;
-    const validResult = ["heads", "tails", "edge"];
-    if (validResult.includes(countId)) return next();
-    next({
-        status: 400,
-        message: `Value of the 'countId' property must be one of ${validResult}. Received: ${countId}`,
-      })
-}
+  if (foundCount === undefined) {
+    return next({
+      status: 404,
+      message: `Count id not found: ${countId}`,
+    });
+  }
+  res.locals.count = foundCount;
+  next();
+};
 
-function read(req, res) {
-    const { countId } = req.params;
-    const foundCount = counts[countId];
-    res.json({ data: foundCount })
-}
+function read(req, res, next) {
+  res.json({
+    data: res.locals.count,
+  });
+};
+
+function list(req, res) {
+  res.json({ data: counts });
+};
 
 module.exports = {
-    list,
-    read: [validateCountId, countExists, read]
-}
+  list,
+  read: [countExists, read],
+  countExists,
+};

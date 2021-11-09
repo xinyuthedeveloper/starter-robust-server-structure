@@ -36,42 +36,47 @@ function create(req, res) {
 }
 
 function list(req, res) {
-  res.json({ data: flips });
+  const { countId } = req.params;
+  const byResult = countId ? flip => flip.result === countId : () => true;
+  res.json({ data: flips.filter(byResult) });
 }
 
 function flipExists(req, res, next) {
   const { flipId } = req.params;
-  const foundFlip = flips.find((flip) => flip.id === Number(flipId));
-  if (foundFlip) return next();
+  const foundFlip = flips.find(flip => flip.id === Number(flipId));
+  if (foundFlip) {
+    res.locals.flip = foundFlip;
+    return next();
+  }
   next({
     status: 404,
     message: `Flip id not found: ${flipId}`,
-  })
+  });
+};
+
+function read(req, res, next) {
+  res.json({ data: res.locals.flip });
 }
 
-function read(req, res) {
-  const { flipId } = req.params;
-  const foundFlip = flips.find((flip) => flip.id === Number(flipId));
-  res.json({ data: foundFlip });
-}
-
-function update(req, res) {
-  const { flipId } = req.params;
-  const foundFlip = flips.find((flip) => flip.id === Number(flipId));
-
-  const originalResult = foundFlip.result;
+function update(req, res, next) {
+  const flip = res.locals.flip;
+  const originalResult = flip.result;
   const { data: { result } = {} } = req.body;
 
   if (originalResult !== result) {
-    // update the flip
-    foundFlip.result = result;
+    // Update the flip
+    flip.result = result;
     // Adjust the counts
-    counts[originalResult] --;
-    counts[result] ++;
+    counts[originalResult] = counts[originalResult] - 1;
+    counts[result] = counts[result] + 1;
   }
 
-  res.json({ data: foundFlip });
-}
+  res.json({ data: flip });
+};
+
+function read(req, res, next) {
+  res.json({ data: res.locals.flip });
+};
 
 function destory(req, res) {
   const { flipId } = req.params;
